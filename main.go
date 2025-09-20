@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 	"unicode"
 )
 
@@ -17,6 +18,12 @@ type userAccount struct {
 	login    string
 	password string
 	url      string
+}
+
+type userAccountWithTimeStamp struct {
+	createdAt time.Time
+	updatedAt time.Time
+	userAccount
 }
 
 func (account userAccount) outputUserData() string {
@@ -35,7 +42,7 @@ func (account *userAccount) generatePassword(n int) {
 	account.password = string(result)
 }
 
-func newAccount(userLogin, userPassword, userUrl string) (*userAccount, error) {
+func userAccountWithTimeStampConstructor(userLogin, userPassword, userUrl string) (*userAccountWithTimeStamp, error) {
 	_, err := url.ParseRequestURI(userUrl)
 
 	if err != nil {
@@ -46,14 +53,18 @@ func newAccount(userLogin, userPassword, userUrl string) (*userAccount, error) {
 		return nil, errors.New("login cannot be empty")
 	}
 
-	acc := &userAccount{
-		login:    userLogin,
-		url:      userUrl,
-		password: userPassword,
+	acc := &userAccountWithTimeStamp{
+		createdAt: time.Now(),
+		updatedAt: time.Now(),
+		userAccount: userAccount{
+			login:    userLogin,
+			url:      userUrl,
+			password: userPassword,
+		},
 	}
 
 	if userPassword == "" {
-		acc.generatePassword(PASSWORD_LENGTH)
+		acc.userAccount.generatePassword(PASSWORD_LENGTH)
 	}
 
 	return acc, nil
@@ -64,7 +75,7 @@ func main() {
 	userPassword := promptUserData("Enter your password")
 	userUrl := promptUserData("Enter you url (yandex/google)")
 
-	account, err := newAccount(userLogin, userPassword, userUrl)
+	account, err := userAccountWithTimeStampConstructor(userLogin, userPassword, userUrl)
 
 	if err != nil {
 		fmt.Println("Error creating account:", err)
