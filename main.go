@@ -2,14 +2,16 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"math/rand"
+	"net/url"
 	"os"
 	"strings"
 	"unicode"
 )
 
-const passwordLength = 13
+const PASSWORD_LENGTH = 13
 
 type userAccount struct {
 	login    string
@@ -19,7 +21,7 @@ type userAccount struct {
 
 func (account userAccount) outputUserData() string {
 	return fmt.Sprintf(
-		"Dear user %s, your password is %s and it's reference to https://%s.com\n", CapitalizeWord(account.login), account.password, account.url)
+		"Dear user %s, your password is %s and it's reference to %s\n", CapitalizeWord(account.login), account.password, account.url)
 }
 
 func (account *userAccount) generatePassword(n int) {
@@ -33,15 +35,41 @@ func (account *userAccount) generatePassword(n int) {
 	account.password = string(result)
 }
 
+func newAccount(userLogin, userPassword, userUrl string) (*userAccount, error) {
+	_, err := url.ParseRequestURI(userUrl)
+
+	if err != nil {
+		return nil, errors.New("invalid URL")
+	}
+
+	if userLogin == "" {
+		return nil, errors.New("login cannot be empty")
+	}
+
+	acc := &userAccount{
+		login:    userLogin,
+		url:      userUrl,
+		password: userPassword,
+	}
+
+	if userPassword == "" {
+		acc.generatePassword(PASSWORD_LENGTH)
+	}
+
+	return acc, nil
+}
+
 func main() {
 	userLogin := promptUserData("Enter your login")
-	userUrl := promptUserData("Enter you url")
+	userPassword := promptUserData("Enter your password")
+	userUrl := promptUserData("Enter you url (yandex/google)")
 
-	account := userAccount{
-		login: userLogin,
-		url:   userUrl,
+	account, err := newAccount(userLogin, userPassword, userUrl)
+
+	if err != nil {
+		fmt.Println("Error creating account:", err)
+		return
 	}
-	account.generatePassword(passwordLength)
 
 	result := account.outputUserData()
 	fmt.Println(result)
