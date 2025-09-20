@@ -3,10 +3,13 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"math/rand"
 	"os"
 	"strings"
 	"unicode"
 )
+
+const passwordLength = 13
 
 type userAccount struct {
 	login    string
@@ -14,18 +17,33 @@ type userAccount struct {
 	url      string
 }
 
+func (account userAccount) outputUserData() string {
+	return fmt.Sprintf(
+		"Dear user %s, your password is %s and it's reference to https://%s.com\n", CapitalizeWord(account.login), account.password, account.url)
+}
+
+func (account *userAccount) generatePassword(n int) {
+	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+	result := make([]rune, n)
+
+	for i := range result {
+		result[i] = letters[rand.Intn(len(letters))]
+	}
+
+	account.password = string(result)
+}
+
 func main() {
 	userLogin := promptUserData("Enter your login")
-	userPassword := promptUserData("Enter you password")
 	userUrl := promptUserData("Enter you url")
 
 	account := userAccount{
-		login:    userLogin,
-		password: userPassword,
-		url:      userUrl,
+		login: userLogin,
+		url:   userUrl,
 	}
+	account.generatePassword(passwordLength)
 
-	result := outputUserData(account)
+	result := account.outputUserData()
 	fmt.Println(result)
 }
 
@@ -42,11 +60,6 @@ func promptUserData(prompt string) string {
 
 	userAnswer = strings.TrimSpace(userAnswer)
 	return userAnswer
-}
-
-func outputUserData(account userAccount) string {
-	return fmt.Sprintf(
-		"Dear user %s, your password is %s and it's reference to https://%s.com\n", CapitalizeWord(account.login), account.password, account.url)
 }
 
 func CapitalizeWord(s string) string {
